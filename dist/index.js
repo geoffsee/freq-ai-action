@@ -28314,6 +28314,13 @@ async function installFreqAi(version, platform) {
     core.addPath(cachedDir);
     return binaryPath;
 }
+async function installLinuxRuntimeDeps(platform) {
+    if (platform.os !== "linux")
+        return;
+    core.info("Installing freq-ai runtime deps (libxdo3)");
+    await exec.exec("sudo", ["apt-get", "update", "-qq"], { silent: true });
+    await exec.exec("sudo", ["apt-get", "install", "-y", "--no-install-recommends", "libxdo3"], { silent: true });
+}
 async function configureGitIdentity() {
     await exec.exec("git", ["config", "--global", "user.name", "github-actions[bot]"]);
     await exec.exec("git", [
@@ -28360,6 +28367,7 @@ async function run() {
         core.setOutput("installed-version", version);
         const binaryPath = await installFreqAi(version, platform);
         core.info(`Installed freq-ai at ${binaryPath}`);
+        await installLinuxRuntimeDeps(platform);
         if (configureGit) {
             await configureGitIdentity();
         }
