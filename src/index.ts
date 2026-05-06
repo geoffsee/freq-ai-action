@@ -173,6 +173,7 @@ async function run(): Promise<void> {
       if (typeof value === "string") env[key] = value;
     }
     if (ghToken) env.GH_TOKEN = ghToken;
+    if (!env.RUST_LOG) env.RUST_LOG = "info";
 
     const cwd = workingDirectory && workingDirectory.length > 0 ? workingDirectory : process.env.GITHUB_WORKSPACE || process.cwd();
 
