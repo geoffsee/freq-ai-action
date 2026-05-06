@@ -28314,12 +28314,19 @@ async function installFreqAi(version, platform) {
     core.addPath(cachedDir);
     return binaryPath;
 }
+const LINUX_RUNTIME_DEPS = [
+    "libxdo3",
+    "libwebkit2gtk-4.1-0",
+    "libgtk-3-0",
+    "libayatana-appindicator3-1",
+    "libsoup-3.0-0",
+];
 async function installLinuxRuntimeDeps(platform) {
     if (platform.os !== "linux")
         return;
-    core.info("Installing freq-ai runtime deps (libxdo3)");
+    core.info(`Installing freq-ai runtime deps: ${LINUX_RUNTIME_DEPS.join(", ")}`);
     await exec.exec("sudo", ["apt-get", "update", "-qq"], { silent: true });
-    await exec.exec("sudo", ["apt-get", "install", "-y", "--no-install-recommends", "libxdo3"], { silent: true });
+    await exec.exec("sudo", ["apt-get", "install", "-y", "--no-install-recommends", ...LINUX_RUNTIME_DEPS], { silent: true });
 }
 async function configureGitIdentity() {
     await exec.exec("git", ["config", "--global", "user.name", "github-actions[bot]"]);
