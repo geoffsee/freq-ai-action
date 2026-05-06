@@ -28386,6 +28386,8 @@ async function run() {
         }
         if (ghToken)
             env.GH_TOKEN = ghToken;
+        if (!env.RUST_LOG)
+            env.RUST_LOG = "info";
         const cwd = workingDirectory && workingDirectory.length > 0 ? workingDirectory : process.env.GITHUB_WORKSPACE || process.cwd();
         core.info(`Running: ${binaryPath} ${args.join(" ")} (cwd=${cwd})`);
         const exitCode = await exec.exec(binaryPath, args, {
