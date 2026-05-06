@@ -117,10 +117,18 @@ async function configureGitIdentity(): Promise<void> {
   ]);
 }
 
-function buildArgs(task: string, taskArgs: string, agent: string, auto: boolean, dryRun: boolean): string[] {
+function buildArgs(
+  task: string,
+  taskArgs: string,
+  agent: string,
+  auto: boolean,
+  dryRun: boolean,
+  preset: string,
+): string[] {
   const args: string[] = ["--agent", agent];
   if (auto) args.push("--auto");
   if (dryRun) args.push("--dry-run");
+  if (preset) args.push("--preset", preset);
   args.push(task);
 
   const trimmed = taskArgs.trim();
@@ -146,6 +154,7 @@ async function run(): Promise<void> {
     const versionInput = core.getInput("version") || "latest";
     const auto = core.getBooleanInput("auto");
     const dryRun = core.getBooleanInput("dry-run");
+    const preset = (core.getInput("preset") ?? "").trim();
     const workingDirectory = core.getInput("working-directory");
     const configureGit = core.getBooleanInput("configure-git");
     const ghToken = core.getInput("github-token");
@@ -166,7 +175,7 @@ async function run(): Promise<void> {
       await configureGitIdentity();
     }
 
-    const args = buildArgs(task, taskArgs, agent, auto, dryRun);
+    const args = buildArgs(task, taskArgs, agent, auto, dryRun, preset);
 
     const env: { [key: string]: string } = {};
     for (const [key, value] of Object.entries(process.env)) {

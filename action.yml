@@ -22,13 +22,17 @@ inputs:
     required: false
     default: "latest"
   auto:
-    description: "Pass --auto to freq-ai (skip interactive confirmation prompts)."
+    description: "Pass --auto to freq-ai. Reduces adapter permission prompts and, for two-phase workflows (ideation, housekeeping, sprint-planning, retrospective, etc.), synthesizes stand-in feedback so the draft chains straight into finalize. Defaults to true because Actions runs are non-interactive."
     required: false
     default: "true"
   dry-run:
     description: "Pass --dry-run to freq-ai (print intended actions without executing)."
     required: false
     default: "false"
+  preset:
+    description: "Workflow preset to use (overrides workflow_preset in freq-ai.toml). Empty = use the project's configured preset."
+    required: false
+    default: ""
   working-directory:
     description: "Directory to run freq-ai in. Defaults to the repository root checked out by actions/checkout."
     required: false

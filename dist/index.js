@@ -28337,12 +28337,14 @@ async function configureGitIdentity() {
         "41898282+github-actions[bot]@users.noreply.github.com",
     ]);
 }
-function buildArgs(task, taskArgs, agent, auto, dryRun) {
+function buildArgs(task, taskArgs, agent, auto, dryRun, preset) {
     const args = ["--agent", agent];
     if (auto)
         args.push("--auto");
     if (dryRun)
         args.push("--dry-run");
+    if (preset)
+        args.push("--preset", preset);
     args.push(task);
     const trimmed = taskArgs.trim();
     if (trimmed) {
@@ -28364,6 +28366,7 @@ async function run() {
         const versionInput = core.getInput("version") || "latest";
         const auto = core.getBooleanInput("auto");
         const dryRun = core.getBooleanInput("dry-run");
+        const preset = (core.getInput("preset") ?? "").trim();
         const workingDirectory = core.getInput("working-directory");
         const configureGit = core.getBooleanInput("configure-git");
         const ghToken = core.getInput("github-token");
@@ -28378,7 +28381,7 @@ async function run() {
         if (configureGit) {
             await configureGitIdentity();
         }
-        const args = buildArgs(task, taskArgs, agent, auto, dryRun);
+        const args = buildArgs(task, taskArgs, agent, auto, dryRun, preset);
         const env = {};
         for (const [key, value] of Object.entries(process.env)) {
             if (typeof value === "string")
