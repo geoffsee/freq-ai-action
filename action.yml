@@ -1,0 +1,53 @@
+name: "freq-ai"
+description: "Run freq-ai automated maintenance tasks against a repository (housekeeping, refresh-docs, code-review, security-review, fix-pr, issue, loop)."
+author: "geoffsee"
+branding:
+  icon: "git-merge"
+  color: "purple"
+
+inputs:
+  task:
+    description: "freq-ai subcommand to run (housekeeping, refresh-docs, refresh-agents, code-review, security-review, ideation, sprint-planning, retrospective, strategic-review, roadmapper, uxr-synth, interview, fix-pr, issue, loop)."
+    required: true
+  args:
+    description: "Positional arguments for tasks that need them (e.g. PR number for fix-pr, issue number for issue, tracker for loop)."
+    required: false
+    default: ""
+  agent:
+    description: "Which agent CLI to drive (claude, cline, codex, copilot, gemini, grok, junie, xai, cursor). The matching CLI must already be installed and authenticated on the runner."
+    required: false
+    default: "claude"
+  version:
+    description: "freq-ai release tag to install. Use 'latest' to resolve the most recent release."
+    required: false
+    default: "latest"
+  auto:
+    description: "Pass --auto to freq-ai (skip interactive confirmation prompts)."
+    required: false
+    default: "true"
+  dry-run:
+    description: "Pass --dry-run to freq-ai (print intended actions without executing)."
+    required: false
+    default: "false"
+  working-directory:
+    description: "Directory to run freq-ai in. Defaults to the repository root checked out by actions/checkout."
+    required: false
+    default: ""
+  configure-git:
+    description: "Configure git user.name/user.email as github-actions[bot] before running. Disable if you handle git identity yourself."
+    required: false
+    default: "true"
+  github-token:
+    description: "Token exposed to freq-ai as GH_TOKEN for gh CLI calls. Defaults to the workflow's GITHUB_TOKEN."
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  exit-code:
+    description: "Exit code returned by freq-ai."
+  installed-version:
+    description: "Version of freq-ai that was installed and executed."
+
+runs:
+  using: "node20"
+  main: "dist/index.js"

@@ -1,0 +1,37 @@
+name: Fix PR review threads
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number to address review threads on"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run freq-ai fix-pr
+        uses: geoffsee/freq-ai-action@v1
+        with:
+          task: fix-pr
+          args: ${{ inputs.pr }}
+          agent: claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
