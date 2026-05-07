@@ -28241,23 +28241,6 @@ const exec = __importStar(__nccwpck_require__(5236));
 const tc = __importStar(__nccwpck_require__(3472));
 const REPO = "geoffsee/freq-ai";
 const BINARY = "freq-ai";
-const SUPPORTED_TASKS = new Set([
-    "housekeeping",
-    "refresh-docs",
-    "refresh-agents",
-    "code-review",
-    "security-review",
-    "ideation",
-    "sprint-planning",
-    "retrospective",
-    "strategic-review",
-    "roadmapper",
-    "uxr-synth",
-    "interview",
-    "fix-pr",
-    "issue",
-    "loop",
-]);
 const TASKS_REQUIRING_ARG = new Set(["fix-pr", "issue", "loop"]);
 function detectPlatform() {
     const rawOs = process.platform;
@@ -28358,9 +28341,8 @@ function buildArgs(task, taskArgs, agent, auto, dryRun, preset) {
 async function run() {
     try {
         const task = core.getInput("task", { required: true }).trim();
-        if (!SUPPORTED_TASKS.has(task)) {
-            throw new Error(`Unsupported task '${task}'. Supported: ${Array.from(SUPPORTED_TASKS).sort().join(", ")}`);
-        }
+        if (!task)
+            throw new Error("Input 'task' cannot be empty.");
         const taskArgs = core.getInput("args") ?? "";
         const agent = core.getInput("agent") || "claude";
         const versionInput = core.getInput("version") || "latest";

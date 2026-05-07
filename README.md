@@ -37,7 +37,7 @@ See [`examples/`](./examples) for ready-made workflows: weekly housekeeping, cod
 
 | Input | Required | Default | Description |
 | --- | --- | --- | --- |
-| `task` | yes | — | freq-ai subcommand to run. One of: `housekeeping`, `refresh-docs`, `refresh-agents`, `code-review`, `security-review`, `ideation`, `sprint-planning`, `retrospective`, `strategic-review`, `roadmapper`, `uxr-synth`, `interview`, `fix-pr`, `issue`, `loop`. |
+| `task` | yes | — | Any freq-ai subcommand to run (examples: `housekeeping`, `backlog-curation`, `ideation`, `sprint-planning`, `code-review`, `issue`, `loop`). |
 | `args` | no | `""` | Positional arguments for tasks that need them. Required for `fix-pr` (PR number), `issue` (issue number), and `loop` (tracker id). |
 | `agent` | no | `claude` | Which agent CLI to drive: `claude`, `cline`, `codex`, `copilot`, `gemini`, `grok`, `junie`, `xai`, `cursor`. |
 | `version` | no | `latest` | freq-ai release tag. `latest` resolves the most recent GitHub release. |
@@ -58,7 +58,7 @@ See [`examples/`](./examples) for ready-made workflows: weekly housekeeping, cod
 
 Different tasks need different `permissions:` blocks on the calling job. Common patterns:
 
-- `housekeeping`, `refresh-docs`, `refresh-agents`, `fix-pr` — `contents: write`, `pull-requests: write`, often `issues: write`.
+- `housekeeping`, `backlog-curation`, `refresh-docs`, `refresh-agents`, `fix-pr` — `contents: write`, `pull-requests: write`, often `issues: write`.
 - `code-review`, `security-review` — `contents: read`, `pull-requests: write`.
 - `issue`, `loop` — `contents: write`, `issues: write`, `pull-requests: write`.
 

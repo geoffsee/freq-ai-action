@@ -1,5 +1,5 @@
 name: "freq-ai"
-description: "Run freq-ai automated maintenance tasks against a repository (housekeeping, refresh-docs, code-review, security-review, fix-pr, issue, loop)."
+description: "Run freq-ai tasks against a repository from GitHub Actions."
 author: "geoffsee"
 branding:
   icon: "git-merge"
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   task:
-    description: "freq-ai subcommand to run (housekeeping, refresh-docs, refresh-agents, code-review, security-review, ideation, sprint-planning, retrospective, strategic-review, roadmapper, uxr-synth, interview, fix-pr, issue, loop)."
+    description: "freq-ai subcommand to run (for example: housekeeping, backlog-curation, ideation, sprint-planning, code-review, issue, loop)."
     required: true
   args:
     description: "Positional arguments for tasks that need them (e.g. PR number for fix-pr, issue number for issue, tracker for loop)."
