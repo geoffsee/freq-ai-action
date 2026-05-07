@@ -28,7 +28,7 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Run freq-ai fix-pr
-        uses: geoffsee/freq-ai-action@v1
+        uses: geoffsee/freq-ai-action@v0.0.1
         with:
           task: fix-pr
           args: ${{ inputs.pr }}

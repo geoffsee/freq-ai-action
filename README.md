@@ -23,7 +23,7 @@ The action downloads the freq-ai release binary onto the runner, optionally conf
 
 - run: npm install -g @anthropic-ai/claude-code
 
-- uses: geoffsee/freq-ai-action@v1
+- uses: geoffsee/freq-ai-action@v0.0.1
   with:
     task: housekeeping
     agent: claude
