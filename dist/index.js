@@ -28241,7 +28241,7 @@ const exec = __importStar(__nccwpck_require__(5236));
 const tc = __importStar(__nccwpck_require__(3472));
 const REPO = "geoffsee/freq-ai";
 const BINARY = "freq-ai";
-const TASKS_REQUIRING_ARG = new Set(["fix-pr", "issue", "loop"]);
+const TASKS_REQUIRING_ARG = new Set(["fix-pr", "issue", "loop", "tracker-matrix"]);
 function detectPlatform() {
     const rawOs = process.platform;
     const rawArch = process.arch;
@@ -28375,11 +28375,38 @@ async function run() {
             env.RUST_LOG = "info";
         const cwd = workingDirectory && workingDirectory.length > 0 ? workingDirectory : process.env.GITHUB_WORKSPACE || process.cwd();
         core.info(`Running: ${binaryPath} ${args.join(" ")} (cwd=${cwd})`);
-        const exitCode = await exec.exec(binaryPath, args, {
-            cwd,
-            env,
-            ignoreReturnCode: true,
-        });
+        let exitCode;
+        if (task === "tracker-matrix") {
+            const result = await exec.getExecOutput(binaryPath, args, {
+                cwd,
+                env,
+                silent: false,
+                ignoreReturnCode: true,
+            });
+            exitCode = result.exitCode;
+            const trimmed = result.stdout.trim();
+            core.setOutput("issues-json", trimmed);
+            let issueCount = "0";
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (Array.isArray(parsed)) {
+                    issueCount = String(parsed.length);
+                }
+            }
+            catch {
+                // malformed stdout — leave count at 0
+            }
+            core.setOutput("issue-count", issueCount);
+        }
+        else {
+            exitCode = await exec.exec(binaryPath, args, {
+                cwd,
+                env,
+                ignoreReturnCode: true,
+            });
+            core.setOutput("issues-json", "");
+            core.setOutput("issue-count", "0");
+        }
         core.setOutput("exit-code", String(exitCode));
         if (exitCode !== 0) {
             core.setFailed(`freq-ai ${task} exited with code ${exitCode}`);

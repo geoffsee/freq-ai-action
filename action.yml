@@ -7,10 +7,10 @@ branding:
 
 inputs:
   task:
-    description: "freq-ai subcommand to run (for example: housekeeping, backlog-curation, ideation, sprint-planning, code-review, issue, loop)."
+    description: "freq-ai subcommand to run (for example: housekeeping, backlog-curation, ideation, sprint-planning, code-review, issue, loop, tracker-matrix)."
     required: true
   args:
-    description: "Positional arguments for tasks that need them (e.g. PR number for fix-pr, issue number for issue, tracker for loop)."
+    description: "Positional arguments for tasks that need them (e.g. PR number for fix-pr, issue number for issue, tracker number for loop/tracker-matrix, plus optional flags such as `--json` for tracker-matrix)."
     required: false
     default: ""
   agent:
@@ -51,6 +51,10 @@ outputs:
     description: "Exit code returned by freq-ai."
   installed-version:
     description: "Version of freq-ai that was installed and executed."
+  issues-json:
+    description: "Stdout JSON array from tracker-matrix (empty for other tasks)."
+  issue-count:
+    description: "Length of issues-json when valid JSON array (0 for other tasks)."
 
 runs:
   using: "node20"
