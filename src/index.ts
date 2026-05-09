@@ -1,3 +1,5 @@
+import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
@@ -89,6 +91,21 @@ async function installLinuxRuntimeDeps(platform: Platform): Promise<void> {
   );
 }
 
+// freq-ai's CLI reads DEV_BOT_PRIVATE_KEY as a *path* to a PEM. Workflows
+// commonly only have the base64-encoded PEM as a secret, so decode it to a
+// temp file and point DEV_BOT_PRIVATE_KEY at it.
+function materializeBotPrivateKey(env: Record<string, string>): void {
+  const b64 = env.DEV_BOT_PRIVATE_KEY_B64;
+  if (!b64 || env.DEV_BOT_PRIVATE_KEY) return;
+  const pem = Buffer.from(b64, "base64").toString("utf8");
+  core.setSecret(pem);
+  const dir = env.RUNNER_TEMP && env.RUNNER_TEMP.length > 0 ? env.RUNNER_TEMP : os.tmpdir();
+  const pemPath = path.join(dir, "dev-bot.pem");
+  fs.writeFileSync(pemPath, pem, { mode: 0o600 });
+  env.DEV_BOT_PRIVATE_KEY = pemPath;
+  core.info(`Decoded DEV_BOT_PRIVATE_KEY_B64 to ${pemPath}`);
+}
+
 async function configureGitIdentity(): Promise<void> {
   await exec.exec("git", ["config", "--global", "user.name", "github-actions[bot]"]);
   await exec.exec("git", [
@@ -161,6 +178,7 @@ async function run(): Promise<void> {
     }
     if (ghToken) env.GH_TOKEN = ghToken;
     if (!env.RUST_LOG) env.RUST_LOG = "info";
+    materializeBotPrivateKey(env);
 
     const cwd = workingDirectory && workingDirectory.length > 0 ? workingDirectory : process.env.GITHUB_WORKSPACE || process.cwd();
 

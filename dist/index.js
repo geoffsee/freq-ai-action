@@ -28235,6 +28235,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const fs = __importStar(__nccwpck_require__(3024));
+const os = __importStar(__nccwpck_require__(8161));
 const path = __importStar(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
@@ -28311,6 +28313,21 @@ async function installLinuxRuntimeDeps(platform) {
     await exec.exec("sudo", ["apt-get", "update", "-qq"], { silent: true });
     await exec.exec("sudo", ["apt-get", "install", "-y", "--no-install-recommends", ...LINUX_RUNTIME_DEPS], { silent: true });
 }
+// freq-ai's CLI reads DEV_BOT_PRIVATE_KEY as a *path* to a PEM. Workflows
+// commonly only have the base64-encoded PEM as a secret, so decode it to a
+// temp file and point DEV_BOT_PRIVATE_KEY at it.
+function materializeBotPrivateKey(env) {
+    const b64 = env.DEV_BOT_PRIVATE_KEY_B64;
+    if (!b64 || env.DEV_BOT_PRIVATE_KEY)
+        return;
+    const pem = Buffer.from(b64, "base64").toString("utf8");
+    core.setSecret(pem);
+    const dir = env.RUNNER_TEMP && env.RUNNER_TEMP.length > 0 ? env.RUNNER_TEMP : os.tmpdir();
+    const pemPath = path.join(dir, "dev-bot.pem");
+    fs.writeFileSync(pemPath, pem, { mode: 0o600 });
+    env.DEV_BOT_PRIVATE_KEY = pemPath;
+    core.info(`Decoded DEV_BOT_PRIVATE_KEY_B64 to ${pemPath}`);
+}
 async function configureGitIdentity() {
     await exec.exec("git", ["config", "--global", "user.name", "github-actions[bot]"]);
     await exec.exec("git", [
@@ -28373,6 +28390,7 @@ async function run() {
             env.GH_TOKEN = ghToken;
         if (!env.RUST_LOG)
             env.RUST_LOG = "info";
+        materializeBotPrivateKey(env);
         const cwd = workingDirectory && workingDirectory.length > 0 ? workingDirectory : process.env.GITHUB_WORKSPACE || process.cwd();
         core.info(`Running: ${binaryPath} ${args.join(" ")} (cwd=${cwd})`);
         let exitCode;
@@ -28539,6 +28557,22 @@ module.exports = require("node:crypto");
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 3024:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
+
+/***/ }),
+
+/***/ 8161:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:os");
 
 /***/ }),
 
