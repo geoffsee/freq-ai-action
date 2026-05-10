@@ -1,8 +1,8 @@
 {
-  "name": "@freq-ai/action",
+  "name": "@caretta/action",
   "version": "0.1.0",
   "private": true,
-  "description": "GitHub Action that runs freq-ai automated maintenance tasks.",
+  "description": "GitHub Action that runs caretta automated maintenance tasks.",
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
