@@ -1,8 +1,8 @@
-# freq-ai GitHub Action
+# caretta GitHub Action
 
 Run [freq-ai](https://github.com/geoffsee/freq-ai) automated maintenance tasks against a repository directly from GitHub Actions.
 
-The action downloads the freq-ai release binary onto the runner, optionally configures a `github-actions[bot]` git identity, then invokes a freq-ai subcommand against the checked-out repo.
+The action downloads the caretta release binary onto the runner, optionally configures a `github-actions[bot]` git identity, then invokes a caretta subcommand against the checked-out repo.
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ The action downloads the freq-ai release binary onto the runner, optionally conf
 
 - run: npm install -g @anthropic-ai/claude-code
 
-- uses: geoffsee/freq-ai-action@v0.0.1
+- uses: geoffsee/caretta-action@v0.0.1
   with:
     task: housekeeping
     agent: claude
@@ -37,15 +37,15 @@ See [`examples/`](./examples) for ready-made workflows: weekly housekeeping, cod
 
 | Input | Required | Default | Description |
 | --- | --- | --- | --- |
-| `task` | yes | — | Any freq-ai subcommand to run (examples: `housekeeping`, `backlog-curation`, `ideation`, `sprint-planning`, `code-review`, `issue`, `loop`). |
+| `task` | yes | — | Any caretta subcommand to run (examples: `housekeeping`, `backlog-curation`, `ideation`, `sprint-planning`, `code-review`, `issue`, `loop`). |
 | `args` | no | `""` | Positional arguments for tasks that need them. Required for `fix-pr` (PR number), `issue` (issue number), and `loop` (tracker id). |
 | `agent` | no | `claude` | Which agent CLI to drive: `claude`, `cline`, `codex`, `copilot`, `gemini`, `grok`, `junie`, `xai`, `cursor`. |
-| `version` | no | `latest` | freq-ai release tag. `latest` resolves the most recent GitHub release. |
-| `auto` | no | `true` | Pass `--auto` to freq-ai (skip interactive prompts). |
-| `dry-run` | no | `false` | Pass `--dry-run` to freq-ai. |
-| `working-directory` | no | `$GITHUB_WORKSPACE` | Directory to run freq-ai in. |
+| `version` | no | `latest` | caretta release tag. `latest` resolves the most recent GitHub release. |
+| `auto` | no | `true` | Pass `--auto` to caretta (skip interactive prompts). |
+| `dry-run` | no | `false` | Pass `--dry-run` to caretta. |
+| `working-directory` | no | `$GITHUB_WORKSPACE` | Directory to run caretta in. |
 | `configure-git` | no | `true` | Configure git identity as `github-actions[bot]` before running. Set `false` if you set the identity yourself. |
-| `github-token` | no | `${{ github.token }}` | Token exposed to freq-ai as `GH_TOKEN` for `gh` calls. |
+| `github-token` | no | `${{ github.token }}` | Token exposed to caretta as `GH_TOKEN` for `gh` calls. |
 
 ## Outputs
 
