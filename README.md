@@ -1,13 +1,13 @@
 # caretta GitHub Action
 
-Run [freq-ai](https://github.com/geoffsee/freq-ai) automated maintenance tasks against a repository directly from GitHub Actions.
+Run [caretta](https://github.com/geoffsee/caretta) automated maintenance tasks against a repository directly from GitHub Actions.
 
 The action downloads the caretta release binary onto the runner, optionally configures a `github-actions[bot]` git identity, then invokes a caretta subcommand against the checked-out repo.
 
 ## Prerequisites
 
-- A linux or macOS runner (Windows is not supported by the freq-ai release binary).
-- The agent CLI you want freq-ai to drive (e.g. `@anthropic-ai/claude-code`, `@openai/codex`) must be installed and authenticated on the runner *before* the action runs. The action does not install agent CLIs for you, so you stay in control of versions and credentials.
+- A linux or macOS runner (Windows is not supported by the caretta release binary).
+- The agent CLI you want caretta to drive (e.g. `@anthropic-ai/claude-code`, `@openai/codex`) must be installed and authenticated on the runner *before* the action runs. The action does not install agent CLIs for you, so you stay in control of versions and credentials.
 - The corresponding agent API key as a workflow secret (e.g. `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`), passed via `env:`.
 
 ## Usage
@@ -51,8 +51,8 @@ See [`examples/`](./examples) for ready-made workflows: weekly housekeeping, cod
 
 | Output | Description |
 | --- | --- |
-| `installed-version` | Resolved freq-ai release tag that was installed. |
-| `exit-code` | Exit code returned by freq-ai. |
+| `installed-version` | Resolved caretta release tag that was installed. |
+| `exit-code` | Exit code returned by caretta. |
 
 ## Permissions
 

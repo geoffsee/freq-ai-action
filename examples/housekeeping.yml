@@ -25,8 +25,8 @@ jobs:
       - name: Install Claude CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Run freq-ai housekeeping
-        uses: geoffsee/freq-ai-action@v0.0.1
+      - name: Run caretta housekeeping
+        uses: geoffsee/caretta-action@v0.0.6
         with:
           task: housekeeping
           agent: claude

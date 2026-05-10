@@ -27,8 +27,8 @@ jobs:
       - name: Install Claude CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Run freq-ai fix-pr
-        uses: geoffsee/freq-ai-action@v0.0.1
+      - name: Run caretta fix-pr
+        uses: geoffsee/caretta-action@v0.0.6
         with:
           task: fix-pr
           args: ${{ inputs.pr }}
