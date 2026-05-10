@@ -23,7 +23,7 @@ The action downloads the caretta release binary onto the runner, optionally conf
 
 - run: npm install -g @anthropic-ai/claude-code
 
-- uses: geoffsee/caretta-action@v0.0.5
+- uses: geoffsee/caretta-action@v0.0.6
   with:
     task: housekeeping
     agent: claude
