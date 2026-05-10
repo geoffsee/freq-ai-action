@@ -1,5 +1,5 @@
-name: "freq-ai"
-description: "Run freq-ai tasks against a repository from GitHub Actions."
+name: "caretta"
+description: "Run caretta tasks against a repository from GitHub Actions."
 author: "geoffsee"
 branding:
   icon: "git-merge"
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   task:
-    description: "freq-ai subcommand to run (for example: housekeeping, backlog-curation, ideation, sprint-planning, code-review, issue, loop, tracker-matrix)."
+    description: "caretta subcommand to run (for example: housekeeping, backlog-curation, ideation, sprint-planning, code-review, issue, loop, tracker-matrix)."
     required: true
   args:
     description: "Positional arguments for tasks that need them (e.g. PR number for fix-pr, issue number for issue, tracker number for loop/tracker-matrix, plus optional flags such as `--json` for tracker-matrix)."
@@ -18,23 +18,23 @@ inputs:
     required: false
     default: "claude"
   version:
-    description: "freq-ai release tag to install. Use 'latest' to resolve the most recent release."
+    description: "caretta release tag to install. Use 'latest' to resolve the most recent release."
     required: false
     default: "latest"
   auto:
-    description: "Pass --auto to freq-ai. Reduces adapter permission prompts and, for two-phase workflows (ideation, housekeeping, sprint-planning, retrospective, etc.), synthesizes stand-in feedback so the draft chains straight into finalize. Defaults to true because Actions runs are non-interactive."
+    description: "Pass --auto to caretta. Reduces adapter permission prompts and, for two-phase workflows (ideation, housekeeping, sprint-planning, retrospective, etc.), synthesizes stand-in feedback so the draft chains straight into finalize. Defaults to true because Actions runs are non-interactive."
     required: false
     default: "true"
   dry-run:
-    description: "Pass --dry-run to freq-ai (print intended actions without executing)."
+    description: "Pass --dry-run to caretta (print intended actions without executing)."
     required: false
     default: "false"
   preset:
-    description: "Workflow preset to use (overrides workflow_preset in freq-ai.toml). Empty = use the project's configured preset."
+    description: "Workflow preset to use (overrides workflow_preset in caretta.toml). Empty = use the project's configured preset."
     required: false
     default: ""
   working-directory:
-    description: "Directory to run freq-ai in. Defaults to the repository root checked out by actions/checkout."
+    description: "Directory to run caretta in. Defaults to the repository root checked out by actions/checkout."
     required: false
     default: ""
   configure-git:
@@ -42,15 +42,15 @@ inputs:
     required: false
     default: "true"
   github-token:
-    description: "Token exposed to freq-ai as GH_TOKEN for gh CLI calls. Defaults to the workflow's GITHUB_TOKEN."
+    description: "Token exposed to caretta as GH_TOKEN for gh CLI calls. Defaults to the workflow's GITHUB_TOKEN."
     required: false
     default: ${{ github.token }}
 
 outputs:
   exit-code:
-    description: "Exit code returned by freq-ai."
+    description: "Exit code returned by caretta."
   installed-version:
-    description: "Version of freq-ai that was installed and executed."
+    description: "Version of caretta that was installed and executed."
   issues-json:
     description: "Stdout JSON array from tracker-matrix (empty for other tasks)."
   issue-count:

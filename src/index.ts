@@ -5,14 +5,20 @@ import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as tc from "@actions/tool-cache";
 
-const REPO = "geoffsee/freq-ai";
-const BINARY = "freq-ai";
+const REPO = "geoffsee/caretta";
+const BINARY = "caretta";
 
 const TASKS_REQUIRING_ARG = new Set(["fix-pr", "issue", "loop", "tracker-matrix"]);
 
 type Platform = {
   os: "linux" | "macos";
   arch: "x86_64" | "aarch64";
+};
+
+type VersionManifest = {
+  resolvedVersion: string;
+  cachedAt: string;
+  platform: string;
 };
 
 function detectPlatform(): Platform {
@@ -22,7 +28,7 @@ function detectPlatform(): Platform {
   let osName: Platform["os"];
   if (rawOs === "linux") osName = "linux";
   else if (rawOs === "darwin") osName = "macos";
-  else throw new Error(`Unsupported OS: ${rawOs} (freq-ai supports linux and macOS runners)`);
+  else throw new Error(`Unsupported OS: ${rawOs} (caretta supports linux and macOS runners)`);
 
   let archName: Platform["arch"];
   if (rawArch === "x64") archName = "x86_64";
@@ -38,26 +44,113 @@ async function resolveVersion(requested: string, token: string): Promise<string>
   }
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
-    "User-Agent": "freq-ai-action",
+    "User-Agent": "caretta-action",
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers });
   if (!res.ok) {
-    throw new Error(`Failed to resolve latest freq-ai release: ${res.status} ${res.statusText}`);
+    throw new Error(`Failed to resolve latest caretta release: ${res.status} ${res.statusText}`);
   }
   const body = (await res.json()) as { tag_name?: string };
   if (!body.tag_name) throw new Error("Latest release response missing tag_name");
   return body.tag_name;
 }
 
-async function installFreqAi(version: string, platform: Platform): Promise<string> {
-  const cached = tc.find(BINARY, version, platform.arch);
-  if (cached) {
-    core.info(`Using cached freq-ai ${version} from ${cached}`);
-    return path.join(cached, BINARY);
+function getManifestPath(platform: Platform): string {
+  const tempDir = process.env.RUNNER_TEMP || os.tmpdir();
+  return path.join(tempDir, `caretta-manifest-${platform.arch}-${platform.os}.json`);
+}
+
+async function loadVersionManifest(platform: Platform): Promise<VersionManifest | null> {
+  const manifestPath = getManifestPath(platform);
+  if (!fs.existsSync(manifestPath)) {
+    return null;
+  }
+  try {
+    const content = fs.readFileSync(manifestPath, "utf-8");
+    return JSON.parse(content) as VersionManifest;
+  } catch {
+    return null;
+  }
+}
+
+async function saveVersionManifest(manifest: VersionManifest, platform: Platform): Promise<void> {
+  const manifestPath = getManifestPath(platform);
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+}
+
+async function checkNewReleaseAvailable(
+  currentVersion: string,
+  token: string,
+): Promise<string | null> {
+  try {
+    const latestVersion = await resolveVersion("latest", token);
+    if (latestVersion !== currentVersion) {
+      core.info(`New release available: ${latestVersion} (current: ${currentVersion})`);
+      return latestVersion;
+    }
+    return null;
+  } catch (err) {
+    core.warning(`Failed to check for new releases: ${err}`);
+    return null;
+  }
+}
+
+async function installCaretta(
+  versionInput: string,
+  platform: Platform,
+  token: string,
+): Promise<{ binaryPath: string; version: string }> {
+  const isLatestRequested = !versionInput || versionInput === "latest";
+
+  // Load cached manifest to check if we have a resolved version
+  const manifest = await loadVersionManifest(platform);
+
+  let version: string;
+
+  if (isLatestRequested && manifest) {
+    // Check if a new release is available
+    const newVersion = await checkNewReleaseAvailable(manifest.resolvedVersion, token);
+    if (newVersion) {
+      version = newVersion;
+      core.info(`Upgrading from ${manifest.resolvedVersion} to ${version}`);
+    } else {
+      version = manifest.resolvedVersion;
+      core.info(`Using cached latest version: ${version}`);
+    }
+  } else if (!isLatestRequested) {
+    // Specific version requested - normalize it
+    version = versionInput.startsWith("v")
+      ? versionInput
+      : `v${versionInput.replace(/^v/, "")}`;
+  } else {
+    // First run or no manifest - resolve the version
+    version = await resolveVersion(versionInput, token);
   }
 
+  // Check tool-cache for this specific version
+  const cached = tc.find(BINARY, version, platform.arch);
+  if (cached) {
+    core.info(`Using cached caretta ${version} from tool-cache`);
+    const binaryPath = path.join(cached, BINARY);
+
+    // Update manifest for latest requests
+    if (isLatestRequested) {
+      await saveVersionManifest(
+        {
+          resolvedVersion: version,
+          cachedAt: new Date().toISOString(),
+          platform: `${platform.arch}-${platform.os}`,
+        },
+        platform,
+      );
+    }
+
+    return { binaryPath, version };
+  }
+
+  // Download the artifact
   const artifact = `${BINARY}-${platform.arch}-${platform.os}.tar.gz`;
   const url = `https://github.com/${REPO}/releases/download/${version}/${artifact}`;
   core.info(`Downloading ${url}`);
@@ -69,7 +162,20 @@ async function installFreqAi(version: string, platform: Platform): Promise<strin
 
   await exec.exec("chmod", ["+x", binaryPath]);
   core.addPath(cachedDir);
-  return binaryPath;
+
+  // Save manifest for latest tracking
+  if (isLatestRequested) {
+    await saveVersionManifest(
+      {
+        resolvedVersion: version,
+        cachedAt: new Date().toISOString(),
+        platform: `${platform.arch}-${platform.os}`,
+      },
+      platform,
+    );
+  }
+
+  return { binaryPath, version };
 }
 
 const LINUX_RUNTIME_DEPS = [
@@ -82,7 +188,7 @@ const LINUX_RUNTIME_DEPS = [
 
 async function installLinuxRuntimeDeps(platform: Platform): Promise<void> {
   if (platform.os !== "linux") return;
-  core.info(`Installing freq-ai runtime deps: ${LINUX_RUNTIME_DEPS.join(", ")}`);
+  core.info(`Installing caretta runtime deps: ${LINUX_RUNTIME_DEPS.join(", ")}`);
   await exec.exec("sudo", ["apt-get", "update", "-qq"], { silent: true });
   await exec.exec(
     "sudo",
@@ -91,7 +197,7 @@ async function installLinuxRuntimeDeps(platform: Platform): Promise<void> {
   );
 }
 
-// freq-ai's CLI reads DEV_BOT_PRIVATE_KEY as a *path* to a PEM. Workflows
+// caretta's CLI reads DEV_BOT_PRIVATE_KEY as a *path* to a PEM. Workflows
 // commonly only have the base64-encoded PEM as a secret, so decode it to a
 // temp file and point DEV_BOT_PRIVATE_KEY at it.
 function materializeBotPrivateKey(env: Record<string, string>): void {
@@ -157,12 +263,10 @@ async function run(): Promise<void> {
     const platform = detectPlatform();
     core.info(`Runner platform: ${platform.arch}-${platform.os} (node ${process.version})`);
 
-    const version = await resolveVersion(versionInput, ghToken);
-    core.info(`Resolving freq-ai ${version}`);
+    const { binaryPath, version } = await installCaretta(versionInput, platform, ghToken);
+    core.info(`Resolved caretta ${version}`);
     core.setOutput("installed-version", version);
-
-    const binaryPath = await installFreqAi(version, platform);
-    core.info(`Installed freq-ai at ${binaryPath}`);
+    core.info(`Installed caretta at ${binaryPath}`);
 
     await installLinuxRuntimeDeps(platform);
 
@@ -217,7 +321,7 @@ async function run(): Promise<void> {
 
     core.setOutput("exit-code", String(exitCode));
     if (exitCode !== 0) {
-      core.setFailed(`freq-ai ${task} exited with code ${exitCode}`);
+      core.setFailed(`caretta ${task} exited with code ${exitCode}`);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

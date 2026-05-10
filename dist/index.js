@@ -28241,8 +28241,8 @@ const path = __importStar(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
 const tc = __importStar(__nccwpck_require__(3472));
-const REPO = "geoffsee/freq-ai";
-const BINARY = "freq-ai";
+const REPO = "geoffsee/caretta";
+const BINARY = "caretta";
 const TASKS_REQUIRING_ARG = new Set(["fix-pr", "issue", "loop", "tracker-matrix"]);
 function detectPlatform() {
     const rawOs = process.platform;
@@ -28253,7 +28253,7 @@ function detectPlatform() {
     else if (rawOs === "darwin")
         osName = "macos";
     else
-        throw new Error(`Unsupported OS: ${rawOs} (freq-ai supports linux and macOS runners)`);
+        throw new Error(`Unsupported OS: ${rawOs} (caretta supports linux and macOS runners)`);
     let archName;
     if (rawArch === "x64")
         archName = "x86_64";
@@ -28269,25 +28269,97 @@ async function resolveVersion(requested, token) {
     }
     const headers = {
         Accept: "application/vnd.github+json",
-        "User-Agent": "freq-ai-action",
+        "User-Agent": "caretta-action",
     };
     if (token)
         headers.Authorization = `Bearer ${token}`;
     const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers });
     if (!res.ok) {
-        throw new Error(`Failed to resolve latest freq-ai release: ${res.status} ${res.statusText}`);
+        throw new Error(`Failed to resolve latest caretta release: ${res.status} ${res.statusText}`);
     }
     const body = (await res.json());
     if (!body.tag_name)
         throw new Error("Latest release response missing tag_name");
     return body.tag_name;
 }
-async function installFreqAi(version, platform) {
+function getManifestPath(platform) {
+    const tempDir = process.env.RUNNER_TEMP || os.tmpdir();
+    return path.join(tempDir, `caretta-manifest-${platform.arch}-${platform.os}.json`);
+}
+async function loadVersionManifest(platform) {
+    const manifestPath = getManifestPath(platform);
+    if (!fs.existsSync(manifestPath)) {
+        return null;
+    }
+    try {
+        const content = fs.readFileSync(manifestPath, "utf-8");
+        return JSON.parse(content);
+    }
+    catch {
+        return null;
+    }
+}
+async function saveVersionManifest(manifest, platform) {
+    const manifestPath = getManifestPath(platform);
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+}
+async function checkNewReleaseAvailable(currentVersion, token) {
+    try {
+        const latestVersion = await resolveVersion("latest", token);
+        if (latestVersion !== currentVersion) {
+            core.info(`New release available: ${latestVersion} (current: ${currentVersion})`);
+            return latestVersion;
+        }
+        return null;
+    }
+    catch (err) {
+        core.warning(`Failed to check for new releases: ${err}`);
+        return null;
+    }
+}
+async function installCaretta(versionInput, platform, token) {
+    const isLatestRequested = !versionInput || versionInput === "latest";
+    // Load cached manifest to check if we have a resolved version
+    const manifest = await loadVersionManifest(platform);
+    let version;
+    if (isLatestRequested && manifest) {
+        // Check if a new release is available
+        const newVersion = await checkNewReleaseAvailable(manifest.resolvedVersion, token);
+        if (newVersion) {
+            version = newVersion;
+            core.info(`Upgrading from ${manifest.resolvedVersion} to ${version}`);
+        }
+        else {
+            version = manifest.resolvedVersion;
+            core.info(`Using cached latest version: ${version}`);
+        }
+    }
+    else if (!isLatestRequested) {
+        // Specific version requested - normalize it
+        version = versionInput.startsWith("v")
+            ? versionInput
+            : `v${versionInput.replace(/^v/, "")}`;
+    }
+    else {
+        // First run or no manifest - resolve the version
+        version = await resolveVersion(versionInput, token);
+    }
+    // Check tool-cache for this specific version
     const cached = tc.find(BINARY, version, platform.arch);
     if (cached) {
-        core.info(`Using cached freq-ai ${version} from ${cached}`);
-        return path.join(cached, BINARY);
+        core.info(`Using cached caretta ${version} from tool-cache`);
+        const binaryPath = path.join(cached, BINARY);
+        // Update manifest for latest requests
+        if (isLatestRequested) {
+            await saveVersionManifest({
+                resolvedVersion: version,
+                cachedAt: new Date().toISOString(),
+                platform: `${platform.arch}-${platform.os}`,
+            }, platform);
+        }
+        return { binaryPath, version };
     }
+    // Download the artifact
     const artifact = `${BINARY}-${platform.arch}-${platform.os}.tar.gz`;
     const url = `https://github.com/${REPO}/releases/download/${version}/${artifact}`;
     core.info(`Downloading ${url}`);
@@ -28297,7 +28369,15 @@ async function installFreqAi(version, platform) {
     const binaryPath = path.join(cachedDir, BINARY);
     await exec.exec("chmod", ["+x", binaryPath]);
     core.addPath(cachedDir);
-    return binaryPath;
+    // Save manifest for latest tracking
+    if (isLatestRequested) {
+        await saveVersionManifest({
+            resolvedVersion: version,
+            cachedAt: new Date().toISOString(),
+            platform: `${platform.arch}-${platform.os}`,
+        }, platform);
+    }
+    return { binaryPath, version };
 }
 const LINUX_RUNTIME_DEPS = [
     "libxdo3",
@@ -28309,11 +28389,11 @@ const LINUX_RUNTIME_DEPS = [
 async function installLinuxRuntimeDeps(platform) {
     if (platform.os !== "linux")
         return;
-    core.info(`Installing freq-ai runtime deps: ${LINUX_RUNTIME_DEPS.join(", ")}`);
+    core.info(`Installing caretta runtime deps: ${LINUX_RUNTIME_DEPS.join(", ")}`);
     await exec.exec("sudo", ["apt-get", "update", "-qq"], { silent: true });
     await exec.exec("sudo", ["apt-get", "install", "-y", "--no-install-recommends", ...LINUX_RUNTIME_DEPS], { silent: true });
 }
-// freq-ai's CLI reads DEV_BOT_PRIVATE_KEY as a *path* to a PEM. Workflows
+// caretta's CLI reads DEV_BOT_PRIVATE_KEY as a *path* to a PEM. Workflows
 // commonly only have the base64-encoded PEM as a secret, so decode it to a
 // temp file and point DEV_BOT_PRIVATE_KEY at it.
 function materializeBotPrivateKey(env) {
@@ -28371,11 +28451,10 @@ async function run() {
         const ghToken = core.getInput("github-token");
         const platform = detectPlatform();
         core.info(`Runner platform: ${platform.arch}-${platform.os} (node ${process.version})`);
-        const version = await resolveVersion(versionInput, ghToken);
-        core.info(`Resolving freq-ai ${version}`);
+        const { binaryPath, version } = await installCaretta(versionInput, platform, ghToken);
+        core.info(`Resolved caretta ${version}`);
         core.setOutput("installed-version", version);
-        const binaryPath = await installFreqAi(version, platform);
-        core.info(`Installed freq-ai at ${binaryPath}`);
+        core.info(`Installed caretta at ${binaryPath}`);
         await installLinuxRuntimeDeps(platform);
         if (configureGit) {
             await configureGitIdentity();
@@ -28427,7 +28506,7 @@ async function run() {
         }
         core.setOutput("exit-code", String(exitCode));
         if (exitCode !== 0) {
-            core.setFailed(`freq-ai ${task} exited with code ${exitCode}`);
+            core.setFailed(`caretta ${task} exited with code ${exitCode}`);
         }
     }
     catch (err) {
