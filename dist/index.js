@@ -28243,7 +28243,13 @@ const exec = __importStar(__nccwpck_require__(5236));
 const tc = __importStar(__nccwpck_require__(3472));
 const REPO = "geoffsee/caretta";
 const BINARY = "caretta";
-const TASKS_REQUIRING_ARG = new Set(["fix-pr", "issue", "loop", "tracker-matrix"]);
+const TASKS_REQUIRING_ARG = new Set([
+    "fix-conflicts",
+    "fix-pr",
+    "issue",
+    "loop",
+    "tracker-matrix",
+]);
 function detectPlatform() {
     const rawOs = process.platform;
     const rawArch = process.arch;

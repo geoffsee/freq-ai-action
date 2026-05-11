@@ -8,7 +8,13 @@ import * as tc from "@actions/tool-cache";
 const REPO = "geoffsee/caretta";
 const BINARY = "caretta";
 
-const TASKS_REQUIRING_ARG = new Set(["fix-pr", "issue", "loop", "tracker-matrix"]);
+const TASKS_REQUIRING_ARG = new Set([
+  "fix-conflicts",
+  "fix-pr",
+  "issue",
+  "loop",
+  "tracker-matrix",
+]);
 
 type Platform = {
   os: "linux" | "macos";
