@@ -31,6 +31,8 @@ The action downloads the caretta release binary onto the runner, optionally conf
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
+For a step-by-step walkthrough (secrets, permissions, version pinning, troubleshooting), see [`docs/SETUP.md`](./docs/SETUP.md).
+
 See [`examples/`](./examples) for ready-made workflows: weekly housekeeping, code review on pull requests, and on-demand `fix-pr`.
 
 ## Inputs
